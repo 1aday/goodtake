@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import mimetypes
 import shutil
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -213,7 +214,10 @@ def create_app(store=None, *, testing=False, run_worker=True):
     @app.get("/api/projects/{project_id}/source")
     def source(project_id: str):
         project = store.get(project_id)
-        return FileResponse(store.directory(project_id) / project["source_file"], media_type="video/mp4")
+        return FileResponse(
+            store.directory(project_id) / project["source_file"],
+            media_type=mimetypes.guess_type(project["source_file"])[0] or "application/octet-stream",
+        )
 
     @app.post("/api/projects/{project_id}/transcript")
     async def transcript(project_id: str, file: UploadFile = File(...)):

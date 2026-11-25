@@ -186,6 +186,8 @@ python scripts/check-wheel.py
   not a multitrack timeline.
 - CPU and memory are used for rendering/recognition. No GPU is required. A sample run is not a
   general speed benchmark.
+- Browser source preview depends on codec support; MP4 with H.264/AAC is the simplest source.
+  FFmpeg can render other inputs even when a browser cannot preview them directly.
 - At most four automatic drafts and two attempts to repair invalid reviewer evidence. Some
   conversations need manual selection; accepted moments survive later provider failures.
 - Picture/caption checks sample frames and speech matching is statistical. These checks do not

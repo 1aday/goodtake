@@ -207,6 +207,8 @@ def render_clip(store, project_id, clip_id, checkpoint=lambda: None, progress=la
         from .quality import title_check
 
         title_check(work / "preview.png", props, work)
+        # Do not show the still renderer's completed receipt as the full video starts.
+        (work / "progress.json").unlink(missing_ok=True)
         run(
             ["node", runtime / "render.mjs", work / "props.json", work / "silent.mp4"],
             checkpoint=checkpoint,
