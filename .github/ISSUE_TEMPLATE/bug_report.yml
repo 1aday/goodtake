@@ -1,0 +1,22 @@
+name: Something did not finish
+description: Help us reproduce an installation, selection, caption or export failure.
+body:
+  - type: input
+    id: environment
+    attributes:
+      label: OS and Goodtake version
+      placeholder: macOS / Linux / Windows, native or Docker, version or commit
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened and what did you expect?
+      description: Include the stage, exact command or clicks, and whether the bundled sample works.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Redacted diagnostics
+      description: Include doctor output or the relevant check result. Do not attach keys, private footage or personal transcripts.

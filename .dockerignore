@@ -1,0 +1,14 @@
+.git
+.venv
+.env
+.env.*
+.goodtake
+**/node_modules
+**/__pycache__
+.pytest_cache
+.ruff_cache
+dist
+build
+docs/assets/studio-*.png
+docs/assets/*.mp4
+.playwright-mcp

@@ -1,0 +1,610 @@
+{
+  "words": [
+    {
+      "text": "Most",
+      "start": 0.0,
+      "end": 0.2,
+      "speaker": "0"
+    },
+    {
+      "text": "clips",
+      "start": 0.2,
+      "end": 0.48,
+      "speaker": "0"
+    },
+    {
+      "text": "lose",
+      "start": 0.48,
+      "end": 1.02,
+      "speaker": "0"
+    },
+    {
+      "text": "the",
+      "start": 1.02,
+      "end": 1.26,
+      "speaker": "0"
+    },
+    {
+      "text": "best",
+      "start": 1.26,
+      "end": 1.48,
+      "speaker": "0"
+    },
+    {
+      "text": "part",
+      "start": 1.48,
+      "end": 1.78,
+      "speaker": "0"
+    },
+    {
+      "text": "of",
+      "start": 1.78,
+      "end": 1.92,
+      "speaker": "0"
+    },
+    {
+      "text": "the",
+      "start": 1.92,
+      "end": 2.0,
+      "speaker": "0"
+    },
+    {
+      "text": "conversation.",
+      "start": 2.0,
+      "end": 2.26,
+      "speaker": "0"
+    },
+    {
+      "text": "They",
+      "start": 3.08,
+      "end": 3.16,
+      "speaker": "0"
+    },
+    {
+      "text": "give",
+      "start": 3.16,
+      "end": 3.32,
+      "speaker": "0"
+    },
+    {
+      "text": "you",
+      "start": 3.32,
+      "end": 3.44,
+      "speaker": "0"
+    },
+    {
+      "text": "the",
+      "start": 3.44,
+      "end": 3.52,
+      "speaker": "0"
+    },
+    {
+      "text": "setup,",
+      "start": 3.52,
+      "end": 3.74,
+      "speaker": "0"
+    },
+    {
+      "text": "but",
+      "start": 4.14,
+      "end": 4.32,
+      "speaker": "0"
+    },
+    {
+      "text": "cut",
+      "start": 4.32,
+      "end": 4.5,
+      "speaker": "0"
+    },
+    {
+      "text": "away",
+      "start": 4.5,
+      "end": 4.76,
+      "speaker": "0"
+    },
+    {
+      "text": "before",
+      "start": 4.76,
+      "end": 5.12,
+      "speaker": "0"
+    },
+    {
+      "text": "the",
+      "start": 5.12,
+      "end": 5.32,
+      "speaker": "0"
+    },
+    {
+      "text": "idea",
+      "start": 5.32,
+      "end": 5.52,
+      "speaker": "0"
+    },
+    {
+      "text": "lands.",
+      "start": 5.52,
+      "end": 5.9,
+      "speaker": "0"
+    },
+    {
+      "text": "A",
+      "start": 6.8,
+      "end": 6.86,
+      "speaker": "0"
+    },
+    {
+      "text": "better",
+      "start": 6.86,
+      "end": 7.04,
+      "speaker": "0"
+    },
+    {
+      "text": "clip",
+      "start": 7.04,
+      "end": 7.3,
+      "speaker": "0"
+    },
+    {
+      "text": "contains",
+      "start": 7.3,
+      "end": 7.66,
+      "speaker": "0"
+    },
+    {
+      "text": "one",
+      "start": 7.66,
+      "end": 7.98,
+      "speaker": "0"
+    },
+    {
+      "text": "complete",
+      "start": 7.98,
+      "end": 8.34,
+      "speaker": "0"
+    },
+    {
+      "text": "thought,",
+      "start": 8.34,
+      "end": 8.64,
+      "speaker": "0"
+    },
+    {
+      "text": "a",
+      "start": 9.18,
+      "end": 9.24,
+      "speaker": "0"
+    },
+    {
+      "text": "clear",
+      "start": 9.24,
+      "end": 9.42,
+      "speaker": "0"
+    },
+    {
+      "text": "opening,",
+      "start": 9.42,
+      "end": 9.72,
+      "speaker": "0"
+    },
+    {
+      "text": "a",
+      "start": 10.22,
+      "end": 10.32,
+      "speaker": "0"
+    },
+    {
+      "text": "useful",
+      "start": 10.32,
+      "end": 10.58,
+      "speaker": "0"
+    },
+    {
+      "text": "payoff,",
+      "start": 10.58,
+      "end": 10.88,
+      "speaker": "0"
+    },
+    {
+      "text": "and",
+      "start": 11.34,
+      "end": 11.6,
+      "speaker": "0"
+    },
+    {
+      "text": "a",
+      "start": 11.6,
+      "end": 11.7,
+      "speaker": "0"
+    },
+    {
+      "text": "natural",
+      "start": 11.7,
+      "end": 11.92,
+      "speaker": "0"
+    },
+    {
+      "text": "place",
+      "start": 11.92,
+      "end": 12.26,
+      "speaker": "0"
+    },
+    {
+      "text": "to",
+      "start": 12.26,
+      "end": 12.44,
+      "speaker": "0"
+    },
+    {
+      "text": "stop.",
+      "start": 12.44,
+      "end": 12.64,
+      "speaker": "0"
+    },
+    {
+      "text": "That",
+      "start": 13.38,
+      "end": 13.56,
+      "speaker": "0"
+    },
+    {
+      "text": "is",
+      "start": 13.56,
+      "end": 13.7,
+      "speaker": "0"
+    },
+    {
+      "text": "why",
+      "start": 13.7,
+      "end": 13.88,
+      "speaker": "0"
+    },
+    {
+      "text": "we",
+      "start": 13.88,
+      "end": 14.08,
+      "speaker": "0"
+    },
+    {
+      "text": "keep",
+      "start": 14.08,
+      "end": 14.24,
+      "speaker": "0"
+    },
+    {
+      "text": "the",
+      "start": 14.24,
+      "end": 14.4,
+      "speaker": "0"
+    },
+    {
+      "text": "original",
+      "start": 14.4,
+      "end": 14.56,
+      "speaker": "0"
+    },
+    {
+      "text": "voice,",
+      "start": 14.56,
+      "end": 15.0,
+      "speaker": "0"
+    },
+    {
+      "text": "choose",
+      "start": 15.4,
+      "end": 15.62,
+      "speaker": "0"
+    },
+    {
+      "text": "a",
+      "start": 15.62,
+      "end": 15.78,
+      "speaker": "0"
+    },
+    {
+      "text": "continuous",
+      "start": 15.78,
+      "end": 16.18,
+      "speaker": "0"
+    },
+    {
+      "text": "excerpt,",
+      "start": 16.18,
+      "end": 16.48,
+      "speaker": "0"
+    },
+    {
+      "text": "and",
+      "start": 17.08,
+      "end": 17.16,
+      "speaker": "0"
+    },
+    {
+      "text": "check",
+      "start": 17.16,
+      "end": 17.34,
+      "speaker": "0"
+    },
+    {
+      "text": "the",
+      "start": 17.34,
+      "end": 17.52,
+      "speaker": "0"
+    },
+    {
+      "text": "finished",
+      "start": 17.52,
+      "end": 17.76,
+      "speaker": "0"
+    },
+    {
+      "text": "video.",
+      "start": 17.76,
+      "end": 18.12,
+      "speaker": "0"
+    },
+    {
+      "text": "Captions",
+      "start": 18.720000000000002,
+      "end": 19.16,
+      "speaker": "0"
+    },
+    {
+      "text": "should",
+      "start": 19.16,
+      "end": 19.32,
+      "speaker": "0"
+    },
+    {
+      "text": "help",
+      "start": 19.32,
+      "end": 19.48,
+      "speaker": "0"
+    },
+    {
+      "text": "you",
+      "start": 19.48,
+      "end": 19.64,
+      "speaker": "0"
+    },
+    {
+      "text": "follow",
+      "start": 19.64,
+      "end": 19.82,
+      "speaker": "0"
+    },
+    {
+      "text": "the",
+      "start": 19.82,
+      "end": 20.06,
+      "speaker": "0"
+    },
+    {
+      "text": "idea",
+      "start": 20.06,
+      "end": 20.34,
+      "speaker": "0"
+    },
+    {
+      "text": "without",
+      "start": 20.34,
+      "end": 20.86,
+      "speaker": "0"
+    },
+    {
+      "text": "covering",
+      "start": 20.86,
+      "end": 21.32,
+      "speaker": "0"
+    },
+    {
+      "text": "the",
+      "start": 21.32,
+      "end": 21.5,
+      "speaker": "0"
+    },
+    {
+      "text": "person",
+      "start": 21.5,
+      "end": 21.78,
+      "speaker": "0"
+    },
+    {
+      "text": "who",
+      "start": 21.78,
+      "end": 21.92,
+      "speaker": "0"
+    },
+    {
+      "text": "is",
+      "start": 21.92,
+      "end": 22.0,
+      "speaker": "0"
+    },
+    {
+      "text": "speaking.",
+      "start": 22.0,
+      "end": 22.2,
+      "speaker": "0"
+    },
+    {
+      "text": "You",
+      "start": 22.94,
+      "end": 23.08,
+      "speaker": "0"
+    },
+    {
+      "text": "can",
+      "start": 23.08,
+      "end": 23.18,
+      "speaker": "0"
+    },
+    {
+      "text": "change",
+      "start": 23.18,
+      "end": 23.36,
+      "speaker": "0"
+    },
+    {
+      "text": "the",
+      "start": 23.36,
+      "end": 23.56,
+      "speaker": "0"
+    },
+    {
+      "text": "headline,",
+      "start": 23.56,
+      "end": 23.8,
+      "speaker": "0"
+    },
+    {
+      "text": "choose",
+      "start": 24.24,
+      "end": 24.42,
+      "speaker": "0"
+    },
+    {
+      "text": "your",
+      "start": 24.42,
+      "end": 24.62,
+      "speaker": "0"
+    },
+    {
+      "text": "own",
+      "start": 24.62,
+      "end": 24.74,
+      "speaker": "0"
+    },
+    {
+      "text": "colors,",
+      "start": 24.74,
+      "end": 24.92,
+      "speaker": "0"
+    },
+    {
+      "text": "and",
+      "start": 25.42,
+      "end": 25.6,
+      "speaker": "0"
+    },
+    {
+      "text": "review",
+      "start": 25.6,
+      "end": 25.78,
+      "speaker": "0"
+    },
+    {
+      "text": "every",
+      "start": 25.78,
+      "end": 26.1,
+      "speaker": "0"
+    },
+    {
+      "text": "moment",
+      "start": 26.1,
+      "end": 26.48,
+      "speaker": "0"
+    },
+    {
+      "text": "before",
+      "start": 26.48,
+      "end": 26.74,
+      "speaker": "0"
+    },
+    {
+      "text": "you",
+      "start": 26.74,
+      "end": 26.96,
+      "speaker": "0"
+    },
+    {
+      "text": "share",
+      "start": 26.96,
+      "end": 27.14,
+      "speaker": "0"
+    },
+    {
+      "text": "it.",
+      "start": 27.14,
+      "end": 27.32,
+      "speaker": "0"
+    },
+    {
+      "text": "The",
+      "start": 27.32,
+      "end": 28.0,
+      "speaker": "0"
+    },
+    {
+      "text": "goal",
+      "start": 28.0,
+      "end": 28.18,
+      "speaker": "0"
+    },
+    {
+      "text": "is",
+      "start": 28.18,
+      "end": 28.38,
+      "speaker": "0"
+    },
+    {
+      "text": "simple,",
+      "start": 28.38,
+      "end": 28.62,
+      "speaker": "0"
+    },
+    {
+      "text": "give",
+      "start": 29.26,
+      "end": 29.38,
+      "speaker": "0"
+    },
+    {
+      "text": "a",
+      "start": 29.38,
+      "end": 29.52,
+      "speaker": "0"
+    },
+    {
+      "text": "good",
+      "start": 29.52,
+      "end": 29.68,
+      "speaker": "0"
+    },
+    {
+      "text": "conversation",
+      "start": 29.68,
+      "end": 30.16,
+      "speaker": "0"
+    },
+    {
+      "text": "another",
+      "start": 30.16,
+      "end": 30.9,
+      "speaker": "0"
+    },
+    {
+      "text": "chance",
+      "start": 30.9,
+      "end": 31.26,
+      "speaker": "0"
+    },
+    {
+      "text": "to",
+      "start": 31.26,
+      "end": 31.5,
+      "speaker": "0"
+    },
+    {
+      "text": "be",
+      "start": 31.5,
+      "end": 31.58,
+      "speaker": "0"
+    },
+    {
+      "text": "heard.",
+      "start": 31.58,
+      "end": 31.76,
+      "speaker": "0"
+    }
+  ]
+}

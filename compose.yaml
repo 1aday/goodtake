@@ -1,0 +1,13 @@
+services:
+  studio:
+    build: .
+    ports:
+      - "127.0.0.1:3210:3210"
+    volumes:
+      - goodtake-data:/data
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY:-}
+    init: true
+volumes:
+  goodtake-data:

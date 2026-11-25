@@ -1,0 +1,185 @@
+{
+  "sample": "Original generated artwork and synthetic narration; not a real podcast benchmark",
+  "results": [
+    {
+      "template": "editorial",
+      "ratio": "9:16",
+      "pass": true,
+      "checks": [
+        {
+          "id": "media",
+          "status": "pass",
+          "message": null
+        },
+        {
+          "id": "audio",
+          "status": "pass",
+          "message": null
+        },
+        {
+          "id": "loudness",
+          "status": "pass",
+          "message": null
+        },
+        {
+          "id": "title",
+          "status": "pass",
+          "message": null
+        },
+        {
+          "id": "captions",
+          "status": "pass",
+          "message": null
+        },
+        {
+          "id": "brand",
+          "status": "pass",
+          "message": null
+        },
+        {
+          "id": "speech",
+          "status": "pass",
+          "message": null
+        }
+      ],
+      "output_sha256": "3e9d3d63e03d5d26ee60a42695e9b5476621ba10f684e0b04b1596d9c1ffb8c3",
+      "render_reused": false,
+      "elapsed_seconds": 103.65
+    },
+    {
+      "template": "paper",
+      "ratio": "9:16",
+      "pass": true,
+      "checks": [
+        {
+          "id": "media",
+          "status": "pass",
+          "message": null
+        },
+        {
+          "id": "audio",
+          "status": "pass",
+          "message": null
+        },
+        {
+          "id": "loudness",
+          "status": "pass",
+          "message": null
+        },
+        {
+          "id": "title",
+          "status": "pass",
+          "message": null
+        },
+        {
+          "id": "captions",
+          "status": "pass",
+          "message": null
+        },
+        {
+          "id": "brand",
+          "status": "pass",
+          "message": null
+        },
+        {
+          "id": "speech",
+          "status": "pass",
+          "message": null
+        }
+      ],
+      "output_sha256": "59769b8984fd9c4af536474153cad1357b5811daea2db1abf15238ce6d85a03b",
+      "render_reused": false,
+      "elapsed_seconds": 93.12
+    },
+    {
+      "template": "focus",
+      "ratio": "9:16",
+      "pass": true,
+      "checks": [
+        {
+          "id": "media",
+          "status": "pass",
+          "message": null
+        },
+        {
+          "id": "audio",
+          "status": "pass",
+          "message": null
+        },
+        {
+          "id": "loudness",
+          "status": "pass",
+          "message": null
+        },
+        {
+          "id": "title",
+          "status": "pass",
+          "message": null
+        },
+        {
+          "id": "captions",
+          "status": "pass",
+          "message": null
+        },
+        {
+          "id": "brand",
+          "status": "pass",
+          "message": null
+        },
+        {
+          "id": "speech",
+          "status": "pass",
+          "message": null
+        }
+      ],
+      "output_sha256": "dd6c8ec47e62e006231d2deb55875b1d46695df6bf8507d96d4e89004f819e44",
+      "render_reused": false,
+      "elapsed_seconds": 93.71
+    },
+    {
+      "template": "editorial",
+      "ratio": "4:5",
+      "pass": true,
+      "checks": [
+        {
+          "id": "media",
+          "status": "pass",
+          "message": null
+        },
+        {
+          "id": "audio",
+          "status": "pass",
+          "message": null
+        },
+        {
+          "id": "loudness",
+          "status": "pass",
+          "message": null
+        },
+        {
+          "id": "title",
+          "status": "pass",
+          "message": null
+        },
+        {
+          "id": "captions",
+          "status": "pass",
+          "message": null
+        },
+        {
+          "id": "brand",
+          "status": "pass",
+          "message": null
+        },
+        {
+          "id": "speech",
+          "status": "pass",
+          "message": null
+        }
+      ],
+      "output_sha256": "b8ebdd7730fa29c95f5772f566ec841af5cb5bf6203033e0a3677931f8ac65a1",
+      "render_reused": false,
+      "elapsed_seconds": 94.16
+    }
+  ]
+}

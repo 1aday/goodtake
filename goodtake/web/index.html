@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#f5f4ee" />
+    <title>Goodtake — give the idea room to land</title>
+    <link rel="icon" href="/static/mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/static/style.css" />
+    <script type="module" src="/static/app.js"></script>
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar">
+        <a class="wordmark" href="#" aria-label="Goodtake home"
+          ><img src="/static/mark.svg" alt="" />goodtake<span>β</span></a
+        >
+        <div class="sidebar-label">YOUR STUDIO</div>
+        <button class="nav-button active" id="library-nav">
+          <span class="nav-icon">▤</span> Conversations
+          <span id="project-count">0</span>
+        </button>
+        <button class="nav-button" id="settings-nav">
+          <span class="nav-icon">⚙</span> Settings
+        </button>
+        <div class="sidebar-bottom">
+          <span class="local-dot"></span>
+          <div>On your computer<small>Your files. Your final cut.</small></div>
+          <a
+            href="https://github.com/1aday/goodtake"
+            target="_blank"
+            rel="noreferrer"
+            >GitHub ↗</a
+          >
+        </div>
+      </aside>
+      <main>
+        <header class="topbar">
+          <div id="breadcrumbs">Your studio <span>/</span> Conversations</div>
+          <button class="button small" id="new-project">
+            ＋ New conversation
+          </button>
+        </header>
+        <div id="content" aria-live="polite">
+          <div class="loading">Opening your studio…</div>
+        </div>
+      </main>
+    </div>
+    <div id="toast" role="status" hidden></div>
+    <dialog id="import-dialog">
+      <form id="import-form">
+        <div class="dialog-heading">
+          <div>
+            <span class="eyebrow">A NEW CONVERSATION</span>
+            <h2>Start with the original.</h2>
+          </div>
+          <button
+            class="icon-button"
+            type="button"
+            data-close
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
+        <label class="upload-zone" for="video-file"
+          ><span class="upload-icon">↥</span><strong>Choose a video</strong
+          ><span>MP4, MOV, MKV, M4V or WebM · up to 3 GB</span
+          ><input id="video-file" type="file" accept="video/*,.mkv" hidden
+        /></label>
+        <div class="or"><span>or paste a YouTube link</span></div>
+        <label class="field"
+          >Video link<input
+            id="youtube-url"
+            type="url"
+            placeholder="https://youtube.com/watch?v=…"
+        /></label>
+        <div class="dialog-footer">
+          <span class="muted">The original stays on your computer.</span
+          ><button class="button primary" id="import-submit" type="submit">
+            Import conversation ↗
+          </button>
+        </div>
+        <p id="import-progress" class="status-message" hidden></p>
+      </form>
+    </dialog>
+    <dialog id="moment-dialog">
+      <form id="moment-form">
+        <div class="dialog-heading">
+          <div>
+            <span class="eyebrow">ONE COMPLETE THOUGHT</span>
+            <h2>Add a moment.</h2>
+          </div>
+          <button
+            class="icon-button"
+            type="button"
+            data-close
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
+        <label class="field"
+          >Headline<input
+            name="title"
+            required
+            maxlength="65"
+            placeholder="What makes this moment worth sharing?"
+        /></label>
+        <div class="two-fields">
+          <label class="field"
+            >Start · seconds<input
+              name="start"
+              type="number"
+              min="0"
+              step=".01"
+              value="0"
+              required /></label
+          ><label class="field"
+            >End · seconds<input
+              name="end"
+              type="number"
+              min="5"
+              step=".01"
+              value="30"
+              required
+          /></label>
+        </div>
+        <p class="muted">
+          Choose a continuous 5–180 second excerpt. Keep its opening and payoff
+          intact.
+        </p>
+        <div class="dialog-footer">
+          <span></span
+          ><button class="button primary" type="submit">Add moment</button>
+        </div>
+      </form>
+    </dialog>
+    <input id="transcript-file" type="file" accept=".srt,.json" hidden />
+  </body>
+</html>
