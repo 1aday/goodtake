@@ -148,6 +148,9 @@ def test_youtube_reports_only_measured_bytes_and_separate_tracks(store, project,
 
     from goodtake.media import download
 
+    # The downloader process is stubbed; this parser test needs no optional installation.
+    monkeypatch.setitem(sys.modules, "yt_dlp", object())
+
     def downloader(args, *, on_line, **kwargs):
         assert args[args.index("--progress-template") + 1] == "download:goodtake:%(progress)j"
         on_line(
