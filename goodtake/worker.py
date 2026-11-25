@@ -26,8 +26,12 @@ def execute(store, job, stop=None):
         if (stop and stop.is_set()) or store.job(job["id"])["status"] != "running":
             raise Cancelled("Stopped. Completed exports and checkpoints are retained.")
 
-    def progress(stage, value=0):
-        store.progress(job["id"], stage, value)
+    context = {}
+
+    def progress(stage, value=0, **detail):
+        if job["kind"] == "render" and context.get("total_clips"):
+            value = (context["clip_index"] - 1 + value) / context["total_clips"]
+        store.progress(job["id"], stage, value, **{**context, **detail})
 
     try:
         if job["kind"] in {"transcribe", "analyze"}:
@@ -43,9 +47,16 @@ def execute(store, job, stop=None):
             )
             if not clips:
                 raise ValueError("No clips need an export. Add a moment first.")
-            for clip in clips:
+            context.update(total_clips=len(clips), completed_clips=0, checked_clips=0)
+            for index, clip in enumerate(clips, 1):
+                context["clip_index"] = index
+                context["clip_title"] = clip["title"]
                 checkpoint()
                 render_clip(store, job["project_id"], clip["id"], checkpoint, progress)
+                context["completed_clips"] += 1
+                saved = next(c for c in store.get(job["project_id"])["clips"] if c["id"] == clip["id"])
+                context["checked_clips"] += int(saved["status"] in {"checked", "ready"})
+                progress("Export saved", 1, phase="verify", phase_progress=1)
         checkpoint()
         store.finish(job["id"], "completed")
     except Cancelled as error:

@@ -18,9 +18,17 @@ from .store import new_id
 MAX_BYTES = 3 * 1024**3
 
 
-def digest(path: Path):
+def digest(path: Path, checkpoint=lambda: None, progress=None):
+    hasher = hashlib.sha256()
+    total, done = path.stat().st_size, 0
     with path.open("rb") as file:
-        return hashlib.file_digest(file, "sha256").hexdigest()
+        while block := file.read(4 * 1024**2):
+            checkpoint()
+            hasher.update(block)
+            done += len(block)
+            if progress:
+                progress(done, total)
+    return hasher.hexdigest()
 
 
 def probe(path):
@@ -33,11 +41,25 @@ def probe(path):
     return {"duration": duration, "width": videos[0]["width"], "height": videos[0]["height"]}
 
 
-def create_project(store, source: Path, *, title=None, brand=None, move=False, sample=False):
+def create_project(
+    store,
+    source: Path,
+    *,
+    title=None,
+    brand=None,
+    move=False,
+    sample=False,
+    project_id=None,
+    checkpoint=lambda: None,
+    progress=lambda **kwargs: None,
+):
     if not source.is_file() or source.stat().st_size > MAX_BYTES:
         raise ValueError("Use an existing video under 3 GB.")
+    checkpoint()
+    progress(phase="inspect", stage="Checking video", phase_progress=None, bytes_done=None, bytes_total=None)
     meta = probe(source)
-    project_id = new_id()
+    checkpoint()
+    project_id = project_id or new_id()
     directory = store.directory(project_id)
     target = directory / (
         "source"
@@ -47,13 +69,43 @@ def create_project(store, source: Path, *, title=None, brand=None, move=False, s
             else ".mp4"
         )
     )
-    (shutil.move if move else shutil.copy2)(source, target)
+    if source.resolve() != target.resolve():
+        progress(phase="save", stage="Saving video", phase_progress=None)
+        if move:
+            shutil.move(source, target)
+        else:
+            total, done = source.stat().st_size, 0
+            with source.open("rb") as original, target.open("wb") as saved:
+                while block := original.read(4 * 1024**2):
+                    checkpoint()
+                    saved.write(block)
+                    done += len(block)
+                    progress(
+                        phase="save",
+                        stage="Saving video",
+                        phase_progress=done / total,
+                        bytes_done=done,
+                        bytes_total=total,
+                    )
+    progress(phase="hash", stage="Verifying source", phase_progress=0)
+    source_digest = digest(
+        target,
+        checkpoint,
+        lambda done, total: progress(
+            phase="hash",
+            stage="Verifying source",
+            phase_progress=done / total,
+            bytes_done=done,
+            bytes_total=total,
+        ),
+    )
+    checkpoint()
     project = {
         "id": project_id,
         "title": title or source.stem,
         "source_name": source.name,
         "source_file": target.name,
-        "source_sha256": digest(target),
+        "source_sha256": source_digest,
         **meta,
         "brand": (brand or Brand()).model_dump(),
         "words": [],
@@ -91,7 +143,7 @@ def youtube_id(url):
     return value
 
 
-def download(store, url, checkpoint=lambda: None):
+def download(store, url, checkpoint=lambda: None, progress=lambda **kwargs: None, project_id=None):
     import tempfile
 
     try:
@@ -101,6 +153,7 @@ def download(store, url, checkpoint=lambda: None):
     import sys
 
     video_id = youtube_id(url)
+    progress(phase="connect", stage="Connecting to YouTube", phase_progress=None)
     with tempfile.TemporaryDirectory(dir=store.root) as temporary:
         target = Path(temporary) / "source.mp4"
         command = [
@@ -108,6 +161,10 @@ def download(store, url, checkpoint=lambda: None):
             "-m",
             "yt_dlp",
             "--no-playlist",
+            "--newline",
+            "--no-colors",
+            "--progress-template",
+            "download:goodtake:%(progress)j",
             "--max-filesize",
             "3G",
             "--match-filter",
@@ -120,10 +177,42 @@ def download(store, url, checkpoint=lambda: None):
             target,
             f"https://www.youtube.com/watch?v={video_id}",
         ]
-        run(command, timeout=1800, checkpoint=checkpoint)
+
+        tracks = {}
+
+        def report(line):
+            if not line.startswith("goodtake:"):
+                return
+            try:
+                value = json.loads(line[len("goodtake:") :])
+                done = value.get("downloaded_bytes", 0)
+                total = value.get("total_bytes")
+                filename = value.get("filename") or "source"
+                tracks.setdefault(filename, len(tracks) + 1)
+                progress(
+                    phase="download",
+                    stage=f"Downloading track {tracks[filename]}",
+                    phase_progress=done / total if total else None,
+                    bytes_done=done,
+                    bytes_total=total,
+                    speed=value.get("speed"),
+                    transfer_file=tracks[filename],
+                )
+            except (ValueError, TypeError):
+                return
+
+        run(command, timeout=1800, checkpoint=checkpoint, on_line=report)
         if not target.exists():
             raise ValueError("YouTube did not provide a usable file. Upload the original video to continue.")
-        project = create_project(store, target, title=f"YouTube · {video_id}", move=True)
+        project = create_project(
+            store,
+            target,
+            title=f"YouTube · {video_id}",
+            move=True,
+            project_id=project_id,
+            checkpoint=checkpoint,
+            progress=progress,
+        )
         store.change(
             project["id"], lambda p: p.update(source_url=f"https://www.youtube.com/watch?v={video_id}")
         )

@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import importlib.util
 import mimetypes
+import os
 import shutil
+import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -17,6 +19,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from . import __version__
 from .bundle import make_bundle
+from .imports import Imports
 from .media import MAX_BYTES, create_project, digest, download, import_transcript
 from .models import Brand, ClipInput, Contract, Settings
 from .store import Store, new_id
@@ -55,15 +58,24 @@ class UrlInput(Contract):
     url: str = Field(max_length=1000)
 
 
+class ImportInput(Contract):
+    filename: str | None = Field(default=None, max_length=250)
+    total_bytes: int | None = Field(default=None, gt=0, le=MAX_BYTES)
+    url: str | None = Field(default=None, max_length=1000)
+
+
 def create_app(store=None, *, testing=False, run_worker=True):
     store = store or Store()
     worker = Worker(store)
+    imports = Imports(store)
 
     @asynccontextmanager
     async def lifespan(app):
         if run_worker:
+            imports.recover()
             worker.start()
         yield
+        imports.close()
         if run_worker:
             worker.close()
 
@@ -155,6 +167,76 @@ def create_app(store=None, *, testing=False, run_worker=True):
     @app.get("/api/projects")
     def projects():
         return [public(project, True) for project in store.projects()]
+
+    @app.get("/api/activity")
+    def activity():
+        return {"imports": store.imports(), "jobs": store.jobs()}
+
+    @app.post("/api/imports")
+    def new_import(body: ImportInput):
+        entry = imports.create(**body.model_dump())
+        if entry["url"]:
+            imports.launch(entry["id"])
+        return entry
+
+    @app.post("/api/imports/{import_id}/file")
+    async def import_file(import_id: str, file: UploadFile = File(...)):
+        entry = store.import_record(import_id)
+        if entry["url"] or entry["status"] != "uploading":
+            await file.close()
+            raise HTTPException(409, "This import is not waiting for a file.")
+        target = imports.source_path(entry)
+        size = 0
+        try:
+            with target.open("wb") as output:
+                while chunk := await file.read(4 * 1024**2):
+                    imports.checkpoint(import_id)
+                    size += len(chunk)
+                    if size > MAX_BYTES:
+                        raise ValueError("Videos must be smaller than 3 GB.")
+                    output.write(chunk)
+                    store.update_import(import_id, bytes_done=size)
+                output.flush()
+                os.fsync(output.fileno())
+            imports.checkpoint(import_id)
+            if size == 0 or (entry["bytes_total"] is not None and size != entry["bytes_total"]):
+                raise ValueError("The upload is incomplete. Choose the video again.")
+            store.update_import(
+                import_id,
+                source_ready=True,
+                status="queued",
+                bytes_total=size,
+                stage="Checking video",
+                phase="inspect",
+                phase_progress=None,
+            )
+            imports.launch(import_id)
+            return store.import_record(import_id)
+        except Exception as error:
+            from .process import Cancelled
+
+            cancelled = isinstance(error, Cancelled)
+            target.unlink(missing_ok=True)
+            store.update_import(
+                import_id,
+                status="cancelled" if cancelled else "failed",
+                stage="Stopped" if cancelled else "Upload failed",
+                error=None if cancelled else safe_error(store, error),
+                finished=time.time(),
+            )
+            if cancelled:
+                return store.import_record(import_id)
+            raise
+        finally:
+            await file.close()
+
+    @app.post("/api/imports/{import_id}/cancel")
+    def cancel_import(import_id: str):
+        return imports.cancel(import_id)
+
+    @app.post("/api/imports/{import_id}/retry")
+    def retry_import(import_id: str):
+        return imports.retry(import_id)
 
     @app.post("/api/projects/upload")
     async def upload(file: UploadFile = File(...)):

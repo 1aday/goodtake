@@ -30,6 +30,9 @@ captions, make it look like your show, and check the finished file before sharin
   copy and an offline gallery. Unapproved clips and full transcripts stay out of the kit.
 - **Work you keep.** Local files, SQLite, a persisted queue, cancellation and content-bound render
   checkpoints. Matching retries repeat verification without encoding the same file again.
+- **Progress you can follow.** Upload/download bytes, transcription position, rendered frames and
+  completed export checks. Activity stays visible across screens, with elapsed time, stop and retry.
+  Steps without measurable progress show activity instead of an estimated percentage.
 
 ![The local studio with a clip preview and editable template controls](docs/assets/studio-desktop.png)
 
@@ -164,6 +167,10 @@ Python owns the local API, SQLite queue, source acquisition, provider calls, sel
 `goodtake/renderer/` is a separate Remotion adapter; it renders silent picture before FFmpeg muxes
 the prepared continuous original-voice track. `goodtake/web/` contains the packaged browser app.
 Provider keys, projects and generated exports belong outside the repository.
+Browser imports run as persisted background tasks once their source is uploaded. `/api/activity`
+reports import stages and production jobs; job details include measured phase progress, units,
+elapsed-time timestamps and saved clip counts. Reloading during a file upload requires choosing
+the file again. Interrupted imports and jobs remain visible for retry.
 
 ```bash
 python -m pip install -e '.[local,youtube,dev]'

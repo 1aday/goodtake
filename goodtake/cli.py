@@ -84,7 +84,7 @@ def main():
     args = parser.parse_args()
     store = Store(args.home)
 
-    def progress(stage, value=0):
+    def progress(stage, value=0, **detail):
         print(f"{value:.0%} {stage}", file=sys.stderr, flush=True)
 
     try:

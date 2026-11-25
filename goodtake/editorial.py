@@ -119,7 +119,7 @@ def review_candidates(call, excerpts, approved):
             )
 
 
-def select(store, project_id, checkpoint=lambda: None, progress=lambda *args: None, call=None):
+def select(store, project_id, checkpoint=lambda: None, progress=lambda *args, **kwargs: None, call=None):
     project = store.get(project_id)
     words = project["words"]
     if not words:
@@ -144,6 +144,9 @@ def select(store, project_id, checkpoint=lambda: None, progress=lambda *args: No
         progress(
             "Finding complete, standalone moments" if not revision else "Refining only the rejected moments",
             0.48 + revision * 0.1,
+            phase="select",
+            phase_progress=None,
+            attempt=revision + 1,
         )
         payload = {
             "title": project["title"],

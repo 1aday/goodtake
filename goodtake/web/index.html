@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="theme-color" content="#f5f4ee" />
-    <title>Goodtake — give the idea room to land</title>
+    <title>Goodtake</title>
     <link rel="icon" href="/static/mark.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/static/style.css" />
     <script type="module" src="/static/app.js"></script>
@@ -15,7 +15,6 @@
         <a class="wordmark" href="#" aria-label="Goodtake home"
           ><img src="/static/mark.svg" alt="" />goodtake<span>β</span></a
         >
-        <div class="sidebar-label">YOUR STUDIO</div>
         <button class="nav-button active" id="library-nav">
           <span class="nav-icon">▤</span> Conversations
           <span id="project-count">0</span>
@@ -24,8 +23,6 @@
           <span class="nav-icon">⚙</span> Settings
         </button>
         <div class="sidebar-bottom">
-          <span class="local-dot"></span>
-          <div>On your computer<small>Your files. Your final cut.</small></div>
           <a
             href="https://github.com/1aday/goodtake"
             target="_blank"
@@ -41,6 +38,7 @@
             ＋ New conversation
           </button>
         </header>
+        <section id="activity-tray" aria-label="Activity" hidden></section>
         <div id="content" aria-live="polite">
           <div class="loading">Opening your studio…</div>
         </div>
@@ -51,8 +49,7 @@
       <form id="import-form">
         <div class="dialog-heading">
           <div>
-            <span class="eyebrow">A NEW CONVERSATION</span>
-            <h2>Start with the original.</h2>
+            <h2>Import video</h2>
           </div>
           <button
             class="icon-button"
@@ -65,19 +62,16 @@
         </div>
         <label class="upload-zone" for="video-file"
           ><span class="upload-icon">↥</span><strong>Choose a video</strong
-          ><span>MP4, MOV, MKV, M4V or WebM · up to 3 GB</span
           ><input id="video-file" type="file" accept="video/*,.mkv" hidden
         /></label>
-        <div class="or"><span>or paste a YouTube link</span></div>
+        <div class="or"><span>or</span></div>
         <label class="field"
-          >Video link<input
+          >YouTube URL<input
             id="youtube-url"
             type="url"
-            placeholder="https://youtube.com/watch?v=…"
         /></label>
         <div class="dialog-footer">
-          <span class="muted">The original stays on your computer.</span
-          ><button class="button primary" id="import-submit" type="submit">
+          <button class="button primary" id="import-submit" type="submit">
             Import conversation ↗
           </button>
         </div>
@@ -88,8 +82,7 @@
       <form id="moment-form">
         <div class="dialog-heading">
           <div>
-            <span class="eyebrow">ONE COMPLETE THOUGHT</span>
-            <h2>Add a moment.</h2>
+            <h2>Add moment</h2>
           </div>
           <button
             class="icon-button"
@@ -105,7 +98,6 @@
             name="title"
             required
             maxlength="65"
-            placeholder="What makes this moment worth sharing?"
         /></label>
         <div class="two-fields">
           <label class="field"
@@ -126,10 +118,6 @@
               required
           /></label>
         </div>
-        <p class="muted">
-          Choose a continuous 5–180 second excerpt. Keep its opening and payoff
-          intact.
-        </p>
         <div class="dialog-footer">
           <span></span
           ><button class="button primary" type="submit">Add moment</button>

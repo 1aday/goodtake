@@ -84,13 +84,13 @@ def structured(store, project_id, instructions, payload, schema, stage="editoria
     return json.loads(text)
 
 
-def transcribe(store, project_id, checkpoint=lambda: None, progress=lambda *args: None):
+def transcribe(store, project_id, checkpoint=lambda: None, progress=lambda *args, **kwargs: None):
     project = store.get(project_id)
     if project["words"] and project["transcript"]["source_sha256"] == project["source_sha256"]:
         return project["words"]
     directory = store.directory(project_id)
     audio = directory / "transcription.wav"
-    progress("Preparing the conversation audio", 0.05)
+    progress("Preparing audio", 0.05, phase="prepare", phase_progress=None)
     run(
         [
             "ffmpeg",
@@ -110,7 +110,7 @@ def transcribe(store, project_id, checkpoint=lambda: None, progress=lambda *args
     )
     settings = store.settings()
     if settings.transcription == "local":
-        progress("Loading local Whisper (first use downloads the model)", 0.08)
+        progress("Loading speech model", 0.08, phase="transcribe", phase_progress=None)
         model = local_model(settings.whisper_model)
         segments, _ = model.transcribe(
             str(audio),
@@ -127,13 +127,22 @@ def transcribe(store, project_id, checkpoint=lambda: None, progress=lambda *args
                 for w in (segment.words or [])
                 if w.word.strip() and w.end > w.start
             )
-            progress("Transcribing on your computer", 0.1 + 0.35 * min(1, segment.end / project["duration"]))
+            fraction = min(1, segment.end / project["duration"])
+            progress(
+                "Transcribing",
+                0.1 + 0.35 * fraction,
+                phase="transcribe",
+                phase_progress=fraction,
+                units_done=min(segment.end, project["duration"]),
+                units_total=project["duration"],
+                unit="seconds",
+            )
         method = "Local Whisper · " + settings.whisper_model
     else:
         key = store.key("ELEVENLABS_API_KEY")
         if not key:
             raise ValueError("Add an ElevenLabs key in Settings, or select local Whisper.")
-        progress("Transcribing with ElevenLabs (audio sent to your provider)", 0.1)
+        progress("Transcribing with ElevenLabs", 0.1, phase="transcribe", phase_progress=None)
         with audio.open("rb") as file:
             try:
                 response = httpx.post(

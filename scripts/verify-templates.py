@@ -58,7 +58,7 @@ for template, ratio in combinations:
     started = time.monotonic()
     previous_stage = [None]
 
-    def progress(stage, value=0, previous_stage=previous_stage):
+    def progress(stage, value=0, previous_stage=previous_stage, **detail):
         if stage != previous_stage[0]:
             print(stage, flush=True)
             previous_stage[0] = stage

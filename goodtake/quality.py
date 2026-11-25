@@ -205,12 +205,13 @@ def speech_check(video, props, output, settings, checkpoint=lambda: None):
     }
 
 
-def verify(video, audio, props, output, settings, checkpoint=lambda: None):
+def verify(video, audio, props, output, settings, checkpoint=lambda: None, progress=lambda *args: None):
     output = Path(output)
     checks = []
 
     def check(name, label, function):
         checkpoint()
+        progress(label, len(checks), 7)
         try:
             details = function()
             checks.append({"id": name, "label": label, "status": "pass", "details": details})
@@ -218,6 +219,7 @@ def verify(video, audio, props, output, settings, checkpoint=lambda: None):
             raise
         except (ValueError, RuntimeError, OSError, TimeoutError, ImportError) as error:
             checks.append({"id": name, "label": label, "status": "fail", "message": str(error)[:600]})
+        progress(label, len(checks), 7)
 
     def media_check():
         data = json.loads(

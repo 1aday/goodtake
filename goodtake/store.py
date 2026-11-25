@@ -38,6 +38,8 @@ class Store:
                     error TEXT, owner TEXT
                 );
                 CREATE TABLE IF NOT EXISTS usage(id TEXT PRIMARY KEY, project_id TEXT, data TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS job_progress(id TEXT PRIMARY KEY, data TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS imports(id TEXT PRIMARY KEY, data TEXT NOT NULL);
             """)
 
     @contextmanager
@@ -110,19 +112,25 @@ class Store:
     def job(self, job_id):
         with self.connect() as db:
             row = db.execute("SELECT * FROM jobs WHERE id=?", (job_id,)).fetchone()
+            detail = db.execute("SELECT data FROM job_progress WHERE id=?", (job_id,)).fetchone()
         if not row:
             raise KeyError("Job not found.")
-        return dict(row)
+        return {**dict(row), "detail": json.loads(detail[0]) if detail else {}}
 
     def jobs(self, project_id=None):
         with self.connect() as db:
             rows = db.execute(
-                "SELECT * FROM jobs "
+                "SELECT jobs.*,job_progress.data AS detail_json FROM jobs LEFT JOIN job_progress USING(id) "
                 + ("WHERE project_id=? " if project_id else "")
                 + "ORDER BY created DESC LIMIT 50",
                 (project_id,) if project_id else (),
             ).fetchall()
-        return [dict(row) for row in rows]
+        result = []
+        for row in rows:
+            value = dict(row)
+            value["detail"] = json.loads(value.pop("detail_json") or "{}")
+            result.append(value)
+        return result
 
     def claim(self, owner: str, only_job=None):
         now = time.time()
@@ -148,26 +156,46 @@ class Store:
                 "UPDATE jobs SET status='running',owner=?,lease=?,updated=? WHERE id=?",
                 (owner, now + 30, now, row[0]),
             )
+            db.execute(
+                "INSERT OR REPLACE INTO job_progress VALUES (?,?)",
+                (row[0], json.dumps({"started": now, "phase": "prepare", "phase_started": now})),
+            )
         return self.job(row[0])
 
-    def progress(self, job_id: str, stage: str, progress: float | None = None):
+    def progress(self, job_id: str, stage: str, progress: float | None = None, **detail):
         with self.connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            job = db.execute("SELECT status FROM jobs WHERE id=?", (job_id,)).fetchone()
+            if not job or job[0] != "running":
+                return
+            row = db.execute("SELECT data FROM job_progress WHERE id=?", (job_id,)).fetchone()
+            data = json.loads(row[0]) if row else {}
+            if detail.get("phase") and detail["phase"] != data.get("phase"):
+                data["phase_started"] = time.time()
+            data.update(detail)
+            db.execute("INSERT OR REPLACE INTO job_progress VALUES (?,?)", (job_id, json.dumps(data)))
             db.execute(
-                "UPDATE jobs SET stage=?,progress=COALESCE(?,progress),updated=? "
+                "UPDATE jobs SET stage=?,progress=MAX(COALESCE(?,progress),progress),updated=? "
                 "WHERE id=? AND status='running'",
                 (stage, progress, time.time(), job_id),
             )
 
     def finish(self, job_id, status, error=None):
         with self.connect() as db:
+            row = db.execute("SELECT data FROM job_progress WHERE id=?", (job_id,)).fetchone()
+            data = json.loads(row[0]) if row else {}
+            data["finished"] = time.time()
+            if status == "completed":
+                data.update(phase="complete", phase_progress=1)
+            db.execute("INSERT OR REPLACE INTO job_progress VALUES (?,?)", (job_id, json.dumps(data)))
             db.execute(
-                "UPDATE jobs SET status=?,error=?,updated=?,stage=?,progress=? WHERE id=?",
+                "UPDATE jobs SET status=?,error=?,updated=?,stage=?,progress=CASE WHEN ?='completed' THEN 1 ELSE progress END WHERE id=?",
                 (
                     status,
                     error,
                     time.time(),
                     "Finished" if status == "completed" else status.replace("_", " "),
-                    1 if status == "completed" else 0,
+                    status,
                     job_id,
                 ),
             )
@@ -183,9 +211,49 @@ class Store:
         with self.connect() as db:
             db.execute(
                 "UPDATE jobs SET status=CASE WHEN status='queued' THEN 'cancelled' ELSE 'cancelling' END "
-                "WHERE id=? AND status IN ('queued','running')",
-                (job_id,),
+                ",updated=? WHERE id=? AND status IN ('queued','running')",
+                (time.time(), job_id),
             )
+
+    def import_record(self, import_id):
+        if not ID.fullmatch(import_id):
+            raise KeyError(import_id)
+        with self.connect() as db:
+            row = db.execute("SELECT data FROM imports WHERE id=?", (import_id,)).fetchone()
+        if not row:
+            raise KeyError(import_id)
+        return json.loads(row[0])
+
+    def imports(self):
+        with self.connect() as db:
+            rows = db.execute("SELECT data FROM imports").fetchall()
+        return sorted((json.loads(row[0]) for row in rows), key=lambda item: item["created"], reverse=True)[
+            :25
+        ]
+
+    def add_import(self, record):
+        with self.connect() as db:
+            db.execute("INSERT INTO imports VALUES (?,?)", (record["id"], json.dumps(record)))
+
+    def update_import(self, import_id, **changes):
+        with self.connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            row = db.execute("SELECT data FROM imports WHERE id=?", (import_id,)).fetchone()
+            if not row:
+                raise KeyError(import_id)
+            data = json.loads(row[0])
+            if data["status"] in {"cancelled", "cancelling"} and changes.get("status") not in {
+                "queued",
+                "uploading",
+                "cancelled",
+                "interrupted",
+            }:
+                return data
+            if changes.get("phase") and changes["phase"] != data.get("phase"):
+                data["phase_started"] = time.time()
+            data.update(changes, updated=time.time())
+            db.execute("UPDATE imports SET data=? WHERE id=?", (json.dumps(data), import_id))
+        return data
 
     def settings(self) -> Settings:
         path = self.root / "settings.json"

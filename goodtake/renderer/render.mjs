@@ -15,10 +15,10 @@ const root = path.dirname(fileURLToPath(import.meta.url));
 const props = JSON.parse(fs.readFileSync(propsPath, "utf8"));
 const publicDir = path.join(path.dirname(propsPath), "media");
 const progressPath = path.join(path.dirname(propsPath), "progress.json");
-function progress(stage, value) {
+function progress(stage, value, detail = {}) {
   fs.writeFileSync(
     progressPath + ".tmp",
-    JSON.stringify({ stage, progress: value }),
+    JSON.stringify({ stage, progress: value, phase: "prepare", phase_progress: null, ...detail }),
   );
   fs.renameSync(progressPath + ".tmp", progressPath);
 }
@@ -66,7 +66,12 @@ if (mode === "still") {
       progress(
         "Rendering picture and word captions",
         0.1 + value.progress * 0.9,
+        { phase: "render", phase_progress: value.progress,
+          frames: value.renderedFrames, total_frames: composition.durationInFrames },
       ),
   });
 }
-progress("Picture rendered", 1);
+progress("Picture rendered", 1, mode === "still" ? {} : {
+  phase: "render", phase_progress: 1,
+  frames: composition.durationInFrames, total_frames: composition.durationInFrames,
+});

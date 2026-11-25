@@ -1751,3 +1751,49 @@ summary {
     background: var(--paper);
   }
 }
+
+/* Activity uses measured stage progress; opaque operations stay indeterminate. */
+#activity-tray { padding: 20px 32px 0; display: grid; gap: 12px; }
+#jobs { margin: 0 32px 20px; }
+#jobs:empty { display: none; }
+.activity-card { padding: 18px 20px; border: 1px solid #d2dcc6; border-radius: 6px; background: #eef1e7; min-width: 0; }
+.activity-card.failed { border-color: #e5cabb; background: #f8ede5; }
+.activity-heading { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+.activity-heading > strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.activity-status { margin-left: auto; font-size: 12px; color: var(--muted); text-align: right; overflow-wrap: anywhere; }
+.activity-heading .icon-button { width: 28px; height: 28px; flex-shrink: 0; font-size: 20px; }
+.activity-steps { display: flex; gap: 24px; padding: 0; margin: 18px 0 14px; list-style: none; }
+.activity-steps li { display: flex; align-items: center; gap: 7px; color: #7b8074; font-size: 11px; }
+.activity-steps li > span { display: grid; place-items: center; width: 20px; height: 20px; border: 1px solid #bfc8b4; border-radius: 50%; font-size: 10px; flex-shrink: 0; }
+.activity-steps .current { color: #273c25; font-weight: 700; }
+.activity-steps .current > span { background: #526c42; border-color: #526c42; color: white; }
+.activity-steps .done { color: #486039; }
+.activity-progress { height: 5px; width: 100%; border-radius: 3px; background: #d7dfcd; overflow: hidden; margin-bottom: 12px; }
+.activity-progress > span { display: block; height: 100%; background: #526c42; transition: width .25s linear; }
+.activity-progress.indeterminate > span { animation: activity-pulse 1.6s ease-in-out infinite alternate; }
+@keyframes activity-pulse { from { transform: translateX(-100%); } to { transform: translateX(340%); } }
+.activity-footer { display: flex; gap: 12px; align-items: center; font-size: 11px; }
+.activity-metrics { color: #5d6653; flex: 1; line-height: 1.7; }
+.activity-percent { font-variant-numeric: tabular-nums; }
+.activity-footer .button { flex-shrink: 0; min-height: 32px; }
+.activity-error { margin: 12px 0 0; font-size: 12px; line-height: 1.6; color: #8a4028; overflow-wrap: anywhere; }
+#activity-connection { color: #8a4028; font-size: 12px; }
+.empty-moments { padding: 30px; }
+.empty-actions .button { min-height: 44px; }
+.dialog-footer { justify-content: flex-end; }
+@media (max-width: 700px) {
+  #activity-tray { padding: 16px 20px 0; }
+  #jobs { margin: 0 20px 18px; }
+  .activity-card { padding: 14px; }
+  .activity-heading { gap: 8px; align-items: flex-start; }
+  .activity-status { max-width: 55%; font-size: 11px; }
+  .activity-steps { gap: 14px; flex-wrap: wrap; }
+  .activity-steps li { font-size: 10px; }
+  .activity-footer { flex-wrap: wrap; }
+  .activity-metrics { min-width: 150px; }
+  .empty-actions { align-items: stretch; flex-direction: column; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .activity-progress.indeterminate > span { animation: none; width: 100% !important; opacity: .45; }
+  .activity-progress > span { transition: none; }
+}

@@ -84,6 +84,7 @@ function setNavigation(view) {
   $("#library-nav").classList.toggle("active", view !== "settings");
   $("#settings-nav").classList.toggle("active", view === "settings");
   $("#project-count").textContent = state.projects.length;
+  renderActivity();
 }
 function activeJob() {
   return state.project?.jobs?.find((j) =>
@@ -108,8 +109,6 @@ function dirty() {
   const exportButton = $("#export-clip");
   if (exportButton) exportButton.textContent = "Save & export clip ↗";
   $$(".inspector-actions a, #approve-clip").forEach((element) => element.hidden = true);
-  const note = $(".inspector-actions .render-hint");
-  if (note) note.textContent = "Unsaved draft. Save and export to check this version.";
   const status = $(".moment-item.active .tag");
   if (status) { status.textContent = "Unsaved draft"; status.className = "tag"; }
 }
@@ -126,15 +125,14 @@ async function library() {
   $("#breadcrumbs").innerHTML = "Your studio <span>/</span> Conversations";
   const first = !state.projects.length;
   $("#content").innerHTML =
-    `<section class="library"><div class="section-top"><div><span class="eyebrow">A LITTLE LESS EDITING. A LOT MORE SHARING.</span>
-    <h1>Your conversations.</h1><p>The moments worth keeping, all in one place.</p></div><span class="quiet-count">${state.projects.length} ${state.projects.length === 1 ? "conversation" : "conversations"}</span></div>
+    `<section class="library"><div class="section-top"><div>
+    <h1>Conversations</h1></div><span class="quiet-count">${state.projects.length} ${state.projects.length === 1 ? "conversation" : "conversations"}</span></div>
     ${
       first
-        ? `<div class="welcome"><div class="welcome-copy"><span class="eyebrow">GOOD CONVERSATIONS DESERVE BETTER CLIPS</span>
-    <h2>Give the idea<br>room to land.</h2><p>Find a complete thought. Make it look like you. Share something worth watching.</p>
+        ? `<div class="welcome"><div class="welcome-copy">
+    <h2>New conversation</h2>
     <div class="welcome-actions"><button class="button primary" id="welcome-import">Import a conversation ↗</button><button class="button text" id="sample-button">Try the sample →</button></div>
-    <div class="welcome-note">Local first. No account needed. The final cut is yours.</div></div><div class="welcome-art"><img src="/static/sample.jpg" alt="Two microphones connected by a continuous strip of film"></div></div>
-    <div class="empty-library"><div><strong>01 / Find the whole thought</strong><p>A clear opening, a real payoff, and a natural place to stop.</p></div><div><strong>02 / Make it yours</strong><p>Expressive captions and considered layouts, in your own colours.</p></div><div><strong>03 / Check the finished file</strong><p>Review picture, captions and speech before you call it ready.</p></div></div>`
+    </div><div class="welcome-art"><img src="/static/sample.jpg" alt="Two microphones connected by a continuous strip of film"></div></div>`
         : `<div class="project-grid">${state.projects
             .map(
               (
@@ -156,7 +154,7 @@ async function library() {
       const project = await request("/api/sample", { method: "POST" });
       state.projects = await request("/api/projects");
       await openProject(project.id);
-      toast("Synthetic sample loaded. No provider calls were made.");
+      toast("Sample loaded");
     }),
   );
   $$("[data-project]").forEach((button) =>
@@ -182,13 +180,14 @@ async function openProject(id, clipId = null) {
   renderProject();
 }
 function renderProject() {
+  renderActivity();
   const p = state.project,
     clip = currentClip(),
     ready = p.clips.filter((c) => c.status === "ready").length;
   $("#breadcrumbs").innerHTML =
     `<button class="button text" id="back-library">Conversations</button><span>/</span>${esc(p.title)}`;
   $("#content").innerHTML =
-    `<section class="project-header"><div class="project-header-top"><div><span class="eyebrow">THE CONVERSATION</span><h1>${esc(p.title)}</h1></div>
+    `<section class="project-header"><div class="project-header-top"><div><h1>${esc(p.title)}</h1></div>
     <div class="project-actions"><button class="button" id="find-moments">✦ Find moments</button><a class="button ${ready ? "" : "disabled"}" id="download-kit" ${ready ? `href="/api/projects/${p.id}/kit"` : 'aria-disabled="true"'}>↓ Guest kit${ready ? " · " + ready : ""}</a></div></div>
     <div class="project-stats"><span>${esc(p.brand.show)}</span><span class="dot-separator">/</span><span>${clock(p.duration)} original</span><span class="dot-separator">/</span><span>${p.clips.length} ${p.clips.length === 1 ? "moment" : "moments"}</span>${p.sample ? '<span class="tag coral">Synthetic sample · prepared selection</span>' : ""}
     ${p.transcript ? `<span class="tag">${esc(p.transcript.method)}</span>` : ""}</div></section><div id="jobs"></div>
@@ -196,21 +195,20 @@ function renderProject() {
       clip
         ? `<section class="editor"><aside class="moments-rail"><div class="rail-heading"><h2>Selected moments</h2><span>${p.clips.length}</span></div>
       ${p.clips.map((c, i) => `<button class="moment-item ${c.id === state.clipId ? "active" : ""}" data-clip="${c.id}"><span class="moment-index"><span>0${i + 1}</span>${tag(c.status)}</span><span class="moment-title">${esc(c.title)}</span><span class="moment-time">${clock(c.start)} — ${clock(c.end)} <span style="float:right">${Math.round(c.end - c.start)}s</span></span></button>`).join("")}
-      <button class="add-moment" id="add-moment">＋ Add a moment</button><p class="rail-note">One complete thought.<br>Original voice. Your final say.</p></aside>
+      <button class="add-moment" id="add-moment">＋ Add a moment</button></aside>
       <div class="preview-pane"><div class="preview-top"><span class="label"><span class="local-dot"></span><span id="preview-label">LAYOUT PREVIEW</span></span><button class="button text small" id="toggle-preview">${clip.video_url ? "Change preview" : "Original speech"}</button></div>
       <div id="preview-holder" style="width:100%;display:flex;justify-content:center"></div><div class="preview-controls"><button class="play-button" id="play-selection" aria-label="Play selection">▶</button>
       <input id="playhead-range" aria-label="Source playhead" type="range" min="0" max="${p.duration}" step=".05" value="${state.playhead}" style="flex:1;min-width:30px;accent-color:#647f50">
-      <span class="playhead" id="playhead-time">${clock(state.playhead)} / ${clock(p.duration)}</span></div>
-      <p class="preview-footnote" id="preview-note">${clip.video_url ? "Watch the actual encoded export." : "Layout preview uses your original footage. Export checks run on the finished file."}</p></div>
-      <aside class="inspector"><div class="inspector-head"><span class="eyebrow">THE HOOK</span><textarea id="clip-title" class="headline-input" rows="2" maxlength="65" aria-label="Clip headline">${esc(state.draft.title)}</textarea></div>
+      <span class="playhead" id="playhead-time">${clock(state.playhead)} / ${clock(p.duration)}</span></div></div>
+      <aside class="inspector"><div class="inspector-head"><textarea id="clip-title" class="headline-input" rows="2" maxlength="65" aria-label="Clip headline">${esc(state.draft.title)}</textarea></div>
       <nav class="tabs" aria-label="Clip controls">${["style", "words", "checks"].map((tab) => `<button class="tab ${state.inspector === tab ? "active" : ""}" data-tab="${tab}">${tab[0].toUpperCase() + tab.slice(1)}</button>`).join("")}</nav><div class="inspector-body" id="inspector-body"></div>
       <div class="inspector-actions"><button class="button" id="save-clip" disabled>Save changes</button><button class="button primary" id="export-clip">${clip.video_url ? "Export again ↗" : "Export clip ↗"}</button>
-      ${["checked", "ready"].includes(clip.status) ? `<a class="button" href="${clip.video_url}?download=true">↓ Download checked clip</a>${clip.status === "checked" ? '<button class="button primary" id="approve-clip">✓ Approve for guest kit</button>' : '<span class="render-hint">Approved by you. Included in the guest kit.</span>'}` : '<span class="render-hint">Finished files are checked before they enter your guest kit.</span>'}</div></aside></section>`
-        : `<section class="empty-moments"><span class="eyebrow">LET THE CONVERSATION DO THE TALKING</span><h2>Find something worth keeping.</h2><p>${p.words.length ? "Your transcript is ready. Find moments automatically, or choose a continuous excerpt yourself." : "Transcribe the conversation on your computer, or import an existing timed transcript."}</p><div class="empty-actions"><button class="button primary" id="${p.words.length ? "add-moment" : "transcribe-now"}">${p.words.length ? "＋ Add a moment" : "Transcribe locally"}</button><button class="button" id="import-transcript">Import SRT or word JSON</button></div></section>`
+      ${["checked", "ready"].includes(clip.status) ? `<a class="button" href="${clip.video_url}?download=true">↓ Download checked clip</a>${clip.status === "checked" ? '<button class="button primary" id="approve-clip">✓ Approve for guest kit</button>' : ''}` : ''}</div></aside></section>`
+        : `<section class="empty-moments"><div class="empty-actions"><button class="button primary" id="${p.words.length ? "add-moment" : "transcribe-now"}">${p.words.length ? "＋ Add a moment" : "Transcribe locally"}</button><button class="button" id="import-transcript">Import transcript</button></div></section>`
     }
-    <section class="words-panel"><div class="words-heading"><div><span class="eyebrow">THE ORIGINAL WORDS</span><h2>${p.words.length ? "Follow the thought." : "Start with a transcript."}</h2></div><div class="button-row"><button class="button small" id="import-transcript-bottom">Import transcript</button>${!p.words.length ? '<button class="button small" id="transcribe-bottom">Transcribe</button>' : ""}</div></div>
-    ${p.transcript?.timing === "estimated" ? '<p class="warning-text">SRT word timing is estimated from subtitle rows. Use local transcription for accurate word highlights.</p>' : ""}
-    <div class="words-text" id="transcript-words">${p.words.length ? p.words.map((w, i) => `<button class="word ${state.draft && w.start >= state.draft.start && w.end <= state.draft.end ? "selected" : ""}" data-word="${i}" title="Jump to ${clock(w.start)}">${esc(w.text)}</button>`).join(" ") : '<p class="no-words">Local Whisper keeps audio on your computer. Optional cloud transcription is available in Settings.</p>'}</div></section>`;
+    <section class="words-panel" ${!p.words.length && !clip ? "hidden" : ""}><div class="words-heading"><div><h2>Transcript</h2></div><div class="button-row"><button class="button small" id="import-transcript-bottom">Import transcript</button>${!p.words.length ? '<button class="button small" id="transcribe-bottom">Transcribe</button>' : ""}</div></div>
+    ${p.transcript?.timing === "estimated" ? '<p class="warning-text">Estimated word timing</p>' : ""}
+    <div class="words-text" id="transcript-words">${p.words.length ? p.words.map((w, i) => `<button class="word ${state.draft && w.start >= state.draft.start && w.end <= state.draft.end ? "selected" : ""}" data-word="${i}" title="Jump to ${clock(w.start)}">${esc(w.text)}</button>`).join(" ") : ""}</div></section>`;
   $("#back-library").onclick = () => action(library);
   $("#find-moments").onclick = () =>
     action(async () => {
@@ -350,7 +348,7 @@ function renderInspector() {
     body = $("#inspector-body");
   if (!d || !body) return;
   if (state.inspector === "style") {
-    body.innerHTML = `<div class="control-block"><div class="control-label">A look that feels like you</div><div class="template-grid">${[
+    body.innerHTML = `<div class="control-block"><div class="control-label">Template</div><div class="template-grid">${[
       "editorial",
       "paper",
       "focus",
@@ -360,11 +358,11 @@ function renderInspector() {
           `<button class="template-button ${d.style.template === template ? "active" : ""}" data-template="${template}"><div class="mini-template ${template}"><div class="mini-title">A thought<br>worth keeping.</div><div class="mini-frame"></div><div class="mini-caption">Make it yours.</div></div>${template[0].toUpperCase() + template.slice(1)}</button>`,
       )
       .join("")}</div></div>
-    <div class="control-block"><div class="control-label">Made for the feed</div><div class="segmented">${["9:16", "4:5"].map((r) => `<button data-ratio="${r}" class="${d.style.ratio === r ? "active" : ""}">${r === "9:16" ? "9:16 · Reels / Shorts" : "4:5 · Feed"}</button>`).join("")}</div></div>
-    <div class="control-block"><div class="control-label">Your accent colour</div><div class="color-row">${["#F36B45", "#A9C46C", "#719FE5", "#B0A0D3", "#D4AA48"].map((color) => `<button class="swatch ${state.brand.accent.toLowerCase() === color.toLowerCase() ? "active" : ""}" data-color="${color}" style="--swatch:${color}" aria-label="Use ${color}"></button>`).join("")}<input class="color-picker" id="accent-color" type="color" value="${state.brand.accent}" aria-label="Custom accent colour"></div></div>
+    <div class="control-block"><div class="control-label">Aspect ratio</div><div class="segmented">${["9:16", "4:5"].map((r) => `<button data-ratio="${r}" class="${d.style.ratio === r ? "active" : ""}">${r === "9:16" ? "9:16 · Reels / Shorts" : "4:5 · Feed"}</button>`).join("")}</div></div>
+    <div class="control-block"><div class="control-label">Accent colour</div><div class="color-row">${["#F36B45", "#A9C46C", "#719FE5", "#B0A0D3", "#D4AA48"].map((color) => `<button class="swatch ${state.brand.accent.toLowerCase() === color.toLowerCase() ? "active" : ""}" data-color="${color}" style="--swatch:${color}" aria-label="Use ${color}"></button>`).join("")}<input class="color-picker" id="accent-color" type="color" value="${state.brand.accent}" aria-label="Custom accent colour"></div></div>
     <div class="control-block"><label class="toggle-row">Word-by-word captions<input id="captions-toggle" type="checkbox" ${d.style.captions ? "checked" : ""}></label><label class="toggle-row">A closing thought<input id="endcard-toggle" type="checkbox" ${state.brand.end_card ? "checked" : ""}></label></div>
     <div class="control-block"><div class="control-label">Source framing</div><div class="segmented">${["fit", "fill"].map((f) => `<button data-framing="${f}" class="${d.style.framing === f ? "active" : ""}">${f === "fit" ? "Keep full frame" : "Fill the window"}</button>`).join("")}</div>
-      ${d.style.framing === "fill" ? `<label class="field" style="margin:15px 0 0">Horizontal focus<input id="focal-x" type="range" min="0" max="1" step=".01" value="${d.style.focal_x}"></label><p class="micro">Check the whole excerpt so neither speaker is cropped out.</p>` : ""}</div>
+      ${d.style.framing === "fill" ? `<label class="field" style="margin:15px 0 0">Horizontal focus<input id="focal-x" type="range" min="0" max="1" step=".01" value="${d.style.focal_x}"></label>` : ""}</div>
     <details><summary>Your show identity</summary>${field("Show name", "brand-show", state.brand.show, "text", 'maxlength="60"')}${field("Guest name", "brand-guest", state.brand.guest, "text", 'maxlength="60"')}${field("Guest role", "brand-role", state.brand.role, "text", 'maxlength="90"')}</details>`;
     $$("[data-template]").forEach(
       (b) =>
@@ -429,10 +427,10 @@ function renderInspector() {
         renderPreview();
       };
   } else if (state.inspector === "words") {
-    body.innerHTML = `<div class="control-block"><div class="control-label">Keep the whole thought</div><div class="two-fields">${field("Start · seconds", "clip-start", d.start, "number", 'min="0" step=".01"')}${field("End · seconds", "clip-end", d.end, "number", 'min="5" step=".01"')}</div><div class="range-help">${Math.round((d.end - d.start) * 10) / 10}s · original, continuous speech</div><div class="button-row" style="margin-top:12px"><button class="button small" id="use-start">Start at playhead</button><button class="button small" id="use-end">End at playhead</button></div></div>
+    body.innerHTML = `<div class="control-block"><div class="control-label">Range</div><div class="two-fields">${field("Start · seconds", "clip-start", d.start, "number", 'min="0" step=".01"')}${field("End · seconds", "clip-end", d.end, "number", 'min="5" step=".01"')}</div><div class="range-help">${Math.round((d.end - d.start) * 10) / 10}s · original, continuous speech</div><div class="button-row" style="margin-top:12px"><button class="button small" id="use-start">Start at playhead</button><button class="button small" id="use-end">End at playhead</button></div></div>
       <label class="field">The closing thought<textarea id="clip-takeaway" maxlength="140">${esc(d.takeaway)}</textarea></label>
       <label class="field">A few words to go with it<textarea id="clip-post" rows="6" maxlength="3000">${esc(d.post)}</textarea></label>
-      <p class="micro">${esc(c.editorial?.method || "Selected by you")}. ${esc(d.reason)}</p><button class="button text danger" id="delete-clip" style="margin-top:20px">Remove this moment</button>`;
+      <button class="button text danger" id="delete-clip" style="margin-top:20px">Remove this moment</button>`;
     for (const key of ["start", "end"])
       $("#clip-" + key).oninput = (e) => {
         d[key] = Number(e.target.value);
@@ -466,18 +464,18 @@ function renderInspector() {
         });
         state.dirty = false;
         await openProject(p.id);
-        toast("Moment removed. Your source video is retained.");
+        toast("Moment removed");
       });
   } else {
     const report = c.report;
     body.innerHTML = report
-      ? `<p class="check-intro">${report.pass ? "These checks passed on the actual encoded file. Watch the clip before approving it." : "The export is held for review. Resolve these checks, then export again."}</p><div class="check-list">${report.checks.map((check) => `<div class="check-row ${check.status === "pass" ? "" : "fail"}"><span class="check-icon">${check.status === "pass" ? "✓" : "!"}</span><div>${esc(check.label)}<small>${esc(check.message || (check.id === "speech" ? `Speech match ${Math.round(check.details.speech_match * 100)}% · checked locally` : check.id === "media" ? `${check.details.width} × ${check.details.height} · ${check.details.duration.toFixed(2)}s` : check.id === "loudness" ? `${check.details.integrated_lufs} LUFS · ${check.details.true_peak_dbtp} dBTP` : "Passed"))}</small></div></div>`).join("")}</div>
-      <div class="button-row" style="margin-top:24px"><a class="button small" href="${c.sheet_url}" target="_blank">Inspect frames ↗</a><a class="button small" href="/api/projects/${p.id}/clips/${c.id}/assets/report.json?download=true">Check report ↓</a></div><p class="check-note">${report.render_reused ? "The existing encoded export was reused and checked again. " : ""}Technical checks support your judgment. They do not prove editorial quality or predict views.</p>`
-      : `<p class="check-intro">The export is checked before it can enter a guest kit.</p><div class="check-list">${["Complete video and correct dimensions", "Original-voice audio and continuity", "Readable headline and captions", "Speech matches the selected words", "Show identity and end card"].map((label) => `<div class="check-row"><span class="check-icon" style="color:#a0aa92">○</span><div>${label}<small>Checked on export</small></div></div>`).join("")}</div><p class="check-note">Your original speech is kept in one continuous excerpt. No generated narration is added to your clips.</p>`;
+      ? `<div class="check-list">${report.checks.map((check) => `<div class="check-row ${check.status === "pass" ? "" : "fail"}"><span class="check-icon">${check.status === "pass" ? "✓" : "!"}</span><div>${esc(check.label)}<small>${esc(check.message || (check.id === "speech" ? `Speech match ${Math.round(check.details.speech_match * 100)}% · checked locally` : check.id === "media" ? `${check.details.width} × ${check.details.height} · ${check.details.duration.toFixed(2)}s` : check.id === "loudness" ? `${check.details.integrated_lufs} LUFS · ${check.details.true_peak_dbtp} dBTP` : "Passed"))}</small></div></div>`).join("")}</div>
+      <div class="button-row" style="margin-top:24px"><a class="button small" href="${c.sheet_url}" target="_blank">Inspect frames ↗</a><a class="button small" href="/api/projects/${p.id}/clips/${c.id}/assets/report.json?download=true">Check report ↓</a></div>`
+      : `<div class="check-list">${["Complete video and correct dimensions", "Original-voice audio and continuity", "Readable headline and captions", "Speech matches the selected words", "Show identity and end card"].map((label) => `<div class="check-row"><span class="check-icon" style="color:#a0aa92">○</span><div>${label}</div></div>`).join("")}</div>`;
     if (state.dirty)
       body.insertAdjacentHTML(
         "afterbegin",
-        '<p class="warning-text" style="margin-bottom:18px">You have unsaved changes. Previous checks do not apply to the edited version.</p>',
+        '<p class="warning-text" style="margin-bottom:18px">Unsaved changes</p>',
       );
   }
 }
@@ -531,10 +529,6 @@ function renderPreview() {
       c.status === "needs_review"
         ? "ENCODED EXPORT · NEEDS REVIEW"
         : "ENCODED EXPORT";
-    $("#preview-note").textContent =
-      c.status === "needs_review"
-        ? "This export has failed checks. Review the report before sharing."
-        : "You are watching the actual encoded export. Creative approval is yours.";
     $("#exported-video").onpause = () =>
       ($("#play-selection").textContent = "▶");
     return;
@@ -578,9 +572,6 @@ function renderPreview() {
   previewObserver.observe(viewport);
   scale();
   $("#preview-label").textContent = "LAYOUT PREVIEW";
-  $("#preview-note").textContent = p.sample
-    ? "Synthetic narration and original artwork. Export to inspect the finished file."
-    : "Original footage and speech. Export checks run on the finished file.";
   const video = $("#source-video");
   video.onloadedmetadata = () => {
     video.currentTime = Math.min(
@@ -678,7 +669,7 @@ async function saveClip(notify = true) {
   state.draft = clipInput(currentClip());
   if (notify) {
     renderProject();
-    toast("Changes saved. Export to check this version.");
+    toast("Saved");
   }
 }
 async function startJob(kind, clipId = null) {
@@ -690,38 +681,16 @@ async function startJob(kind, clipId = null) {
   state.project.jobs.unshift(job);
   state.lastJob = job.id + ":" + job.status;
   renderJobs();
-  toast(
-    kind === "render"
-      ? "Export queued. You can follow its progress here."
-      : "The editor is working on your conversation.",
-  );
+  toast("Queued");
+  pollActivity();
 }
 function renderJobs() {
   const container = $("#jobs");
   if (!container || !state.project) return;
   const job = activeJob() || state.project.jobs[0];
-  if (!job || job.status === "completed") {
-    container.innerHTML = "";
-    setBusy(false);
-    return;
-  }
-  const busy = ["queued", "running", "cancelling"].includes(job.status);
-  setBusy(busy);
-  container.innerHTML = `<div class="job-strip ${["failed", "interrupted"].includes(job.status) ? "failed" : ""}"><div class="job-message"><strong>${esc(job.stage)}</strong><small>${esc(job.error || (job.status === "cancelling" ? "Stopping. A provider request already in progress may need to finish." : busy ? "Completed work is saved as the editor progresses." : "Your source and saved exports are retained."))}</small></div>
-    ${
-      busy
-        ? `<div class="progress-track" aria-label="Production progress"><span style="width:${Math.max(3, job.progress * 100)}%"></span></div><button class="button small" id="stop-job" ${job.status === "cancelling" ? "disabled" : ""}>Stop</button>`
-        : `<button class="button small" id="retry-job">Retry</button>`
-    }</div>`;
-  $("#stop-job")?.addEventListener("click", () =>
-    action(async () => {
-      await request(`/api/jobs/${job.id}/cancel`, { method: "POST" });
-      await poll();
-    }),
-  );
-  $("#retry-job")?.addEventListener("click", () =>
-    action(() => startJob(job.kind, job.clip_id)),
-  );
+  setBusy(Boolean(activeJob()));
+  container.innerHTML = job && !dismissed.has(job.id) ? activityCard(job, "job") : "";
+  bindActivity(container);
 }
 function setBusy(busy) {
   for (const selector of [
@@ -790,18 +759,18 @@ async function settings() {
   $("#breadcrumbs").innerHTML = "Your studio <span>/</span> Settings";
   const s = status.settings;
   $("#content").innerHTML =
-    `<section class="settings-page"><span class="eyebrow">YOUR TOOLS. YOUR CHOICES.</span><h1>Make yourself at home.</h1><p>Run the work locally. Connect a provider when you want a second pair of editorial eyes.</p><form id="settings-form">
-    <section class="settings-section"><div><h2>Editorial selection</h2><p>Automatic moment selection sends transcript text to OpenAI. Manual selection works without a key.</p></div><div>
-    <label class="field">OpenAI API key ${status.providers.openai ? '<span class="tag good">Configured · value hidden</span>' : ""}<input id="openai-key" type="password" autocomplete="off" placeholder="${status.providers.openai ? "Leave blank to keep the current key" : "sk-…"}"></label>
-    ${field("Editorial model", "editor-model", s.editor_model)}<p class="micro">Use a model that supports the Responses API and strict structured outputs.</p></div></section>
-    <section class="settings-section"><div><h2>Speech to words</h2><p>Local Whisper keeps the recording on this computer. Cloud transcription sends audio to ElevenLabs.</p></div><div>
+    `<section class="settings-page"><h1>Settings</h1><form id="settings-form">
+    <section class="settings-section"><div><h2>Editorial selection</h2></div><div>
+    <label class="field">OpenAI API key ${status.providers.openai ? '<span class="tag good">Configured</span>' : ""}<input id="openai-key" type="password" autocomplete="off"></label>
+    ${field("Editorial model", "editor-model", s.editor_model)}</div></section>
+    <section class="settings-section"><div><h2>Speech to words</h2></div><div>
     <label class="field">Transcription provider<select id="transcription-provider"><option value="local" ${s.transcription === "local" ? "selected" : ""}>Local Whisper · no API fee</option><option value="elevenlabs" ${s.transcription === "elevenlabs" ? "selected" : ""}>ElevenLabs Scribe · your API key</option></select></label>
-    <label class="field">ElevenLabs API key ${status.providers.elevenlabs ? '<span class="tag good">Configured · value hidden</span>' : ""}<input id="elevenlabs-key" type="password" autocomplete="off" placeholder="Leave blank to keep the current key"></label>
+    <label class="field">ElevenLabs API key ${status.providers.elevenlabs ? '<span class="tag good">Configured</span>' : ""}<input id="elevenlabs-key" type="password" autocomplete="off"></label>
     <div class="two-fields">${field("Language code", "language-code", s.language, "text", 'maxlength="3"')}${field("Whisper model", "whisper-model", s.whisper_model)}</div>
-    <p class="warning-text">This release verifies English typography and OCR. Other speech languages are experimental. Use a multilingual Whisper model for languages other than English.</p></div></section>
-    <section class="settings-section"><div><h2>Your editorial defaults</h2><p>Keep the useful thought intact. You make the final sharing decision.</p></div><div>${field("Moments per conversation", "clip-count", s.clips_per_episode, "number", 'min="1" max="8"')}
+    </div></section>
+    <section class="settings-section"><div><h2>Your editorial defaults</h2></div><div>${field("Moments per conversation", "clip-count", s.clips_per_episode, "number", 'min="1" max="8"')}
     <label class="toggle-row">Exclude profanity<input id="exclude-profanity" type="checkbox" ${s.exclude_profanity ? "checked" : ""}></label></div></section>
-    <section class="settings-section"><div><h2>Local setup</h2><p>Renderer and export checks use these tools on your computer.</p></div><div class="tool-list">${Object.entries(
+    <section class="settings-section"><div><h2>Local setup</h2></div><div class="tool-list">${Object.entries(
       status.tools,
     )
       .map(
@@ -812,7 +781,7 @@ async function settings() {
         "",
       )}<span class="tool ${status.local_speech ? "" : "missing"}">${status.local_speech ? "✓" : "!"} Local speech check</span></div></section>
     <div class="button-row"><button class="button primary" type="submit">Save settings</button><button class="button" type="button" id="return-project">${state.project ? "Back to conversation" : "Back to conversations"}</button></div>
-    <div class="privacy-note">Keys are saved only in your local data directory with restricted file permissions. They are never included in guest kits. No analytics or automatic social publishing. API usage is recorded as tokens or audio duration; it is not a provider invoice.<br><a href="https://www.remotion.dev/docs/license/pricing" target="_blank" rel="noreferrer">The renderer has separate Remotion license terms ↗</a></div></form></section>`;
+    <div class="privacy-note"><a href="https://www.remotion.dev/docs/license/pricing" target="_blank" rel="noreferrer">Remotion license ↗</a></div></form></section>`;
   $("#settings-form").onsubmit = (event) => {
     event.preventDefault();
     action(async () => {
@@ -832,7 +801,7 @@ async function settings() {
         },
       });
       state.status = await request("/api/status");
-      toast("Local settings saved.");
+      toast("Saved");
       $("#openai-key").value = "";
       $("#elevenlabs-key").value = "";
     });
@@ -844,6 +813,7 @@ async function settings() {
 }
 
 function showImport() {
+  $(".upload-zone strong").textContent = "Choose a video";
   $("#import-dialog").showModal();
   $("#import-progress").hidden = true;
   $("#youtube-url").value = "";
@@ -864,76 +834,43 @@ function showMoment() {
     100;
   $("#moment-dialog").showModal();
 }
-function upload(path, file, onProgress) {
+function upload(path, file, onProgress, onRequest) {
   return new Promise((resolve, reject) => {
     const form = new FormData();
     form.append("file", file);
-    const xhr = new XMLHttpRequest();
+    const xhr = new XMLHttpRequest(), started = performance.now();
     xhr.open("POST", path);
     xhr.setRequestHeader("X-Goodtake", "1");
-    xhr.upload.onprogress = (event) => {
-      if (event.lengthComputable) onProgress?.(event.loaded / event.total);
+    onRequest?.(xhr);
+    xhr.upload.onprogress = event => {
+      if (event.lengthComputable) onProgress?.(event.loaded / event.total, event.loaded, event.total, event.loaded / Math.max(.1, (performance.now() - started)/1000));
     };
     xhr.onload = () => {
       let data;
-      try {
-        data = JSON.parse(xhr.responseText);
-      } catch {
-        reject(new Error("The import did not finish. Try again."));
-        return;
-      }
+      try { data = JSON.parse(xhr.responseText); }
+      catch { reject(new Error("Import failed")); return; }
       if (xhr.status >= 200 && xhr.status < 300) resolve(data);
-      else
-        reject(
-          new Error(
-            typeof data.detail === "string"
-              ? data.detail
-              : "The file could not be imported.",
-          ),
-        );
+      else reject(new Error(typeof data.detail === "string" ? data.detail : "Import failed"));
     };
-    xhr.onerror = () => reject(new Error("Connection lost during import."));
+    xhr.onerror = () => reject(new Error("Connection lost during upload"));
+    xhr.onabort = () => reject(new DOMException("Upload stopped", "AbortError"));
     xhr.send(form);
   });
 }
-$("#import-form").onsubmit = (event) => {
+$("#import-form").onsubmit = event => {
   event.preventDefault();
   action(async () => {
-    const button = $("#import-submit"),
-      progress = $("#import-progress"),
-      file = $("#video-file").files[0],
-      url = $("#youtube-url").value.trim();
-    if (!file && !url) {
-      toast("Choose a video or paste a YouTube link.", true);
-      return;
-    }
+    const button = $("#import-submit"), file = $("#video-file").files[0], url = $("#youtube-url").value.trim();
+    if (!file && !url) { toast("Choose a video or enter a YouTube URL", true); return; }
     button.disabled = true;
-    progress.hidden = false;
-    progress.textContent = file
-      ? "Importing the original video…"
-      : "Downloading from YouTube. This can take several minutes…";
     try {
-      const project = file
-        ? await upload(
-            "/api/projects/upload",
-            file,
-            (value) =>
-              (progress.textContent =
-                value < 1
-                  ? `Importing video · ${Math.round(value * 100)}%`
-                  : "Checking the source video…"),
-          )
-        : await request("/api/projects/youtube", {
-            method: "POST",
-            body: { url },
-          });
+      const entry = await request("/api/imports", {method:"POST", body:file ? {filename:file.name, total_bytes:file.size} : {url}});
+      imports.unshift(entry); followImport = {id:entry.id, view:state.view, projectId:state.project?.id};
       $("#import-dialog").close();
-      state.projects = await request("/api/projects");
-      await openProject(project.id);
-      toast("Conversation imported. Your original stays local.");
-    } finally {
-      button.disabled = false;
-    }
+      renderActivity();
+      if (file) { importFiles.set(entry.id, file); await uploadImport(entry, file); }
+      else await pollActivity();
+    } finally { button.disabled = false; }
   });
 };
 $("#video-file").onchange = () => {
@@ -973,8 +910,8 @@ $("#transcript-file").onchange = () =>
     await openProject(project.id, state.clipId);
     toast(
       file.name.endsWith(".srt")
-        ? "Transcript imported. Word timing from SRT is approximate."
-        : "Timed words imported.",
+        ? "Transcript imported · estimated timing"
+        : "Transcript imported",
     );
     $("#transcript-file").value = "";
   });
@@ -1020,6 +957,144 @@ async function initialize() {
   else if (hash.has("project"))
     await openProject(hash.get("project"), hash.get("clip"));
   else await library();
-  setInterval(poll, 1800);
+  await pollActivity();
+  setInterval(() => { poll(); pollActivity(); }, 1000);
 }
+const activeStates = ["uploading", "queued", "running", "cancelling"];
+const importFiles = new Map(), uploadRequests = new Map(), transferProgress = new Map();
+const dismissed = new Set(JSON.parse(localStorage.getItem("goodtake-dismissed") || "[]"));
+let imports = [], activityJobs = [], activityBusy = false, followImport = null;
+const bytes = (n) => n >= 1024 ** 3 ? `${(n / 1024 ** 3).toFixed(2)} GB` : n >= 1024 ** 2 ? `${(n / 1024 ** 2).toFixed(1)} MB` : `${Math.round(n / 1024)} KB`;
+function activityCard(item, type) {
+  const importing = type === "import", detail = importing ? item : item.detail || {};
+  const active = activeStates.includes(item.status), finished = item.status === "completed";
+  const needsFile = importing && item.status === "uploading" && !uploadRequests.has(item.id) && !importFiles.has(item.id);
+  const phase = detail.phase || (importing ? "upload" : "prepare");
+  const stages = importing
+    ? (item.url ? [["connect", "Connect"], ["download", "Download"], ["inspect", "Verify"]] : [["upload", "Upload"], ["inspect", "Verify"]])
+    : item.kind === "render" ? [["prepare", "Prepare"], ["render", "Render"], ["verify", "Check"]]
+    : item.kind === "analyze" ? [["prepare", "Prepare"], ["transcribe", "Transcribe"], ["select", "Find moments"]]
+    : [["prepare", "Prepare"], ["transcribe", "Transcribe"]];
+  const canonicalPhase = ["save", "hash"].includes(phase) ? "inspect" : phase;
+  const current = finished ? stages.length : Math.max(0, stages.findIndex(([key]) => key === canonicalPhase));
+  const transfer = importing && phase === "upload" ? transferProgress.get(item.id) : null;
+  const fraction = transfer?.fraction ?? detail.phase_progress;
+  const measured = typeof fraction === "number" && Number.isFinite(fraction);
+  const percent = Math.max(0, Math.min(100, Math.floor((fraction || 0) * 100)));
+  const elapsed = clock((detail.finished || (!active ? item.updated : Date.now() / 1000)) - (detail.started || item.created));
+  const metrics = [];
+  if (importing) {
+    const done = transfer?.done ?? detail.bytes_done, total = transfer?.total ?? detail.bytes_total;
+    if (["upload", "download", "save", "hash"].includes(phase) && done != null)
+      metrics.push(total ? `${bytes(done)} / ${bytes(total)}` : bytes(done));
+    if (transfer?.speed > 0) metrics.push(`${bytes(transfer.speed)}/s`);
+    else if (detail.speed > 0 && phase === "download") metrics.push(`${bytes(detail.speed)}/s`);
+  } else {
+    if (detail.total_clips) metrics.push(`Clip ${detail.clip_index} of ${detail.total_clips}`);
+    if (measured && detail.units_done != null && detail.units_total != null)
+      metrics.push(detail.unit === "seconds" ? `${clock(detail.units_done)} / ${clock(detail.units_total)} transcribed` : `${Math.floor(detail.units_done)} / ${Math.floor(detail.units_total)} ${detail.unit}`);
+    if (detail.completed_clips) metrics.push(`${detail.completed_clips} saved · ${detail.checked_clips} passed`);
+    if (phase === "select" && detail.attempt) metrics.push(`Round ${detail.attempt}`);
+  }
+  metrics.push(`${elapsed} elapsed`);
+  let title = importing ? item.filename : ({render: "Export", analyze: "Find moments", transcribe: "Transcription"}[item.kind] || "Processing");
+  const stage = finished ? (importing ? "Imported" : item.kind === "render" && detail.checked_clips < detail.total_clips ? "Export needs review" : "Completed")
+    : needsFile ? "Waiting for video" : item.status === "queued" ? "Queued" : item.status === "cancelled" ? "Stopped" : item.stage;
+  return `<article class="activity-card ${["failed", "interrupted"].includes(item.status) ? "failed" : ""}" data-activity="${item.id}">
+    <div class="activity-heading"><strong>${esc(title)}</strong><span class="activity-status">${esc(stage)}</span>
+    ${!active ? `<button class="icon-button" data-dismiss="${item.id}" aria-label="Dismiss ${esc(title)}">×</button>` : ""}</div>
+    <ol class="activity-steps" aria-label="${esc(title)} stages">${stages.map(([key, label], index) => `<li class="${index < current ? "done" : index === current ? "current" : ""}"><span>${index < current ? "✓" : index + 1}</span>${label}</li>`).join("")}</ol>
+    ${active && item.status !== "queued" && !needsFile ? `<div class="activity-progress ${measured ? "" : "indeterminate"}" role="progressbar" aria-label="${esc(stage)}" aria-valuemin="0" aria-valuemax="100" ${measured ? `aria-valuenow="${percent}"` : 'aria-valuetext="In progress"'}><span style="width:${measured ? percent : 30}%"></span></div>` : ""}
+    <div class="activity-footer"><span class="activity-metrics">${esc(metrics.join(" · "))}</span>${active && measured ? `<strong class="activity-percent">${percent}%</strong>` : ""}
+    ${needsFile ? `<button class="button small" data-resume="${item.id}">Choose video</button>` : ""}
+    ${active ? `<button class="button small" data-stop="${item.id}" data-type="${type}" ${item.status === "cancelling" ? "disabled" : ""}>${item.status === "cancelling" ? "Stopping…" : "Stop"}</button>` : finished ? (importing || state.project?.id !== item.project_id ? `<button class="button small" data-open="${item.project_id}">Open</button>` : "") : `<button class="button small" data-retry="${item.id}" data-type="${type}">${importing && !item.url && !item.source_ready && !importFiles.has(item.id) ? "Choose video" : "Retry"}</button>`}</div>
+    ${item.error && item.status !== "cancelled" ? `<p class="activity-error" role="status">${esc(item.error)}</p>` : ""}</article>`;
+}
+function bindActivity(container) {
+  $$('[data-resume]', container).forEach(button => button.onclick = () => action(async () => {
+    await request(`/api/imports/${button.dataset.resume}/cancel`, {method:"POST"});
+    dismissed.add(button.dataset.resume);
+    showImport();
+    await pollActivity();
+  }));
+  $$('[data-dismiss]', container).forEach(button => button.onclick = () => {
+    dismissed.add(button.dataset.dismiss);
+    localStorage.setItem("goodtake-dismissed", JSON.stringify([...dismissed].slice(-150)));
+    renderActivity(); renderJobs();
+  });
+  $$('[data-open]', container).forEach(button => button.onclick = () => action(() => openProject(button.dataset.open)));
+  $$('[data-stop]', container).forEach(button => button.onclick = () => action(async () => {
+    const id = button.dataset.stop, importing = button.dataset.type === "import";
+    // Persist the stop before aborting the browser's transfer.
+    await request(`/api/${importing ? "imports" : "jobs"}/${id}/cancel`, {method:"POST"});
+    uploadRequests.get(id)?.abort();
+    await Promise.all([pollActivity(), poll()]);
+  }));
+  $$('[data-retry]', container).forEach(button => button.onclick = () => action(async () => {
+    const id = button.dataset.retry;
+    if (button.dataset.type !== "import") {
+      const job = activityJobs.find(j => j.id === id) || state.project?.jobs.find(j => j.id === id);
+      await openProject(job.project_id);
+      return startJob(job.kind, job.clip_id);
+    }
+    const entry = imports.find(i => i.id === id);
+    if (!entry.url && !entry.source_ready && !importFiles.has(id)) { showImport(); return; }
+    const retried = await request(`/api/imports/${id}/retry`, {method:"POST"});
+    imports = imports.map(i => i.id === id ? retried : i);
+    if (retried.status === "uploading") action(() => uploadImport(retried, importFiles.get(id)));
+    renderActivity();
+  }));
+}
+function renderActivity() {
+  const container = $("#activity-tray");
+  const visible = item => !dismissed.has(item.id) && (activeStates.includes(item.status) || Date.now()/1000 - item.updated < (item.status === "completed" ? 300 : 3600));
+  const latestJobs = activityJobs.filter((item, index, all) => all.findIndex(other => other.project_id === item.project_id) === index);
+  const entries = [...imports.filter(visible).map(item => [item, "import"]),
+    ...latestJobs.filter(j => visible(j) && (state.view !== "project" || j.project_id !== state.project?.id)).map(item => [item, "job"])];
+  container.hidden = !entries.length;
+  container.innerHTML = entries.map(([item,type]) => activityCard(item,type)).join("");
+  bindActivity(container);
+}
+async function pollActivity() {
+  if (activityBusy) return;
+  activityBusy = true;
+  try {
+    const activity = await request("/api/activity");
+    imports = activity.imports; activityJobs = activity.jobs;
+    renderActivity();
+    imports.filter(i => i.status === "completed").forEach(i => importFiles.delete(i.id));
+    const completed = imports.find(i => i.id === followImport?.id && i.status === "completed");
+    if (completed) {
+      const context = followImport;
+      followImport = null;
+      state.projects = await request("/api/projects");
+      if (!state.dirty && state.view === context.view && (state.view !== "project" || state.project?.id === context.projectId))
+        await openProject(completed.project_id);
+    }
+    $("#activity-connection")?.remove();
+  } catch {
+    const container = $("#activity-tray");
+    if (container.children.length && !$("#activity-connection")) {
+      container.hidden = false;
+      container.insertAdjacentHTML("beforeend", '<p id="activity-connection" role="status">Connection lost · reconnecting…</p>');
+    }
+  } finally { activityBusy = false; }
+}
+async function uploadImport(entry, file) {
+  try {
+    await upload(`/api/imports/${entry.id}/file`, file, (fraction, done, total, speed) => {
+      transferProgress.set(entry.id, {fraction, done, total, speed});
+      renderActivity();
+    }, xhr => uploadRequests.set(entry.id, xhr));
+  } catch (error) {
+    if (error.name !== "AbortError") {
+      await request(`/api/imports/${entry.id}/cancel`, {method:"POST"}).catch(() => {});
+      throw error;
+    }
+  } finally {
+    uploadRequests.delete(entry.id); transferProgress.delete(entry.id);
+    await pollActivity();
+  }
+}
+
 action(initialize);

@@ -32,7 +32,7 @@ def renderer_digest():
     return hasher.hexdigest()
 
 
-def ensure_renderer(store, checkpoint=lambda: None, progress=lambda *args: None):
+def ensure_renderer(store, checkpoint=lambda: None, progress=lambda *args, **kwargs: None):
     if not shutil.which("node") or not shutil.which("npm"):
         raise ValueError("Install Node.js 22+ to run the local video renderer, then run goodtake setup.")
     version = int(run(["node", "--version"]).strip().lstrip("v").split(".")[0])
@@ -42,7 +42,7 @@ def ensure_renderer(store, checkpoint=lambda: None, progress=lambda *args: None)
         "renderer-" + renderer_digest()[:12]
     )
     if not (root / "node_modules/remotion/package.json").exists():
-        progress("Installing the local renderer (first run only)", 0.02)
+        progress("Installing renderer", 0.02, phase="prepare", phase_progress=None)
         shutil.copytree(
             RENDERER, root, dirs_exist_ok=True, ignore=shutil.ignore_patterns("node_modules", "bundle")
         )
@@ -74,7 +74,7 @@ def layout(style):
     return result
 
 
-def render_clip(store, project_id, clip_id, checkpoint=lambda: None, progress=lambda *args: None):
+def render_clip(store, project_id, clip_id, checkpoint=lambda: None, progress=lambda *args, **kwargs: None):
     from .quality import verify
 
     project = store.get(project_id)
@@ -83,8 +83,8 @@ def render_clip(store, project_id, clip_id, checkpoint=lambda: None, progress=la
         raise ValueError("Clip not found.")
     directory = store.directory(project_id)
     source = directory / project["source_file"]
-    progress("Verifying the original source", 0.02)
-    source_digest = digest(source)
+    progress("Verifying source", 0.02, phase="prepare", phase_progress=None)
+    source_digest = digest(source, checkpoint)
     if source_digest != project["source_sha256"]:
         raise ValueError("The source file changed. Import it again to create a new project.")
     start, end, words = excerpt(clip, project["words"], project["duration"])
@@ -127,7 +127,7 @@ def render_clip(store, project_id, clip_id, checkpoint=lambda: None, progress=la
         )
     if not reusable:
         runtime = ensure_renderer(store, checkpoint, progress)
-        progress("Preparing one continuous source excerpt", 0.08)
+        progress("Preparing excerpt", 0.08, phase="prepare", phase_progress=None)
         media = work / "media"
         media.mkdir(exist_ok=True)
         run(
@@ -188,7 +188,15 @@ def render_clip(store, project_id, clip_id, checkpoint=lambda: None, progress=la
             path = work / "progress.json"
             try:
                 info = json.loads(path.read_text())
-                progress(info["stage"], 0.15 + 0.6 * min(1, max(0, info["progress"])))
+                progress(
+                    info["stage"],
+                    0.15 + 0.6 * min(1, max(0, info["progress"])),
+                    phase=info.get("phase", "render"),
+                    phase_progress=info.get("phase_progress"),
+                    units_done=info.get("frames"),
+                    units_total=info.get("total_frames"),
+                    unit="frames",
+                )
             except (OSError, ValueError, KeyError):
                 pass
 
@@ -197,7 +205,7 @@ def render_clip(store, project_id, clip_id, checkpoint=lambda: None, progress=la
             chrome = Path("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
             if chrome.exists():
                 node_env["CHROME_PATH"] = str(chrome)
-        progress("Checking headline layout before the full render", 0.12)
+        progress("Checking layout", 0.12, phase="prepare", phase_progress=None)
         run(
             ["node", runtime / "render.mjs", work / "props.json", work / "preview.png", "still"],
             checkpoint=checkpoint,
@@ -209,6 +217,7 @@ def render_clip(store, project_id, clip_id, checkpoint=lambda: None, progress=la
         title_check(work / "preview.png", props, work)
         # Do not show the still renderer's completed receipt as the full video starts.
         (work / "progress.json").unlink(missing_ok=True)
+        progress("Starting render", 0.15, phase="prepare", phase_progress=None)
         run(
             ["node", runtime / "render.mjs", work / "props.json", work / "silent.mp4"],
             checkpoint=checkpoint,
@@ -248,9 +257,23 @@ def render_clip(store, project_id, clip_id, checkpoint=lambda: None, progress=la
                 }
             )
         )
-    progress("Checking the actual picture, captions and original speech", 0.78)
+    progress(
+        "Checking export", 0.78, phase="verify", phase_progress=0, units_done=0, units_total=7, unit="checks"
+    )
     checkpoint()
-    report = verify(output, audio, props, work, store.settings(), checkpoint)
+
+    def checked(label, done, total):
+        progress(
+            label,
+            0.78 + 0.2 * done / total,
+            phase="verify",
+            phase_progress=done / total,
+            units_done=done,
+            units_total=total,
+            unit="checks",
+        )
+
+    report = verify(output, audio, props, work, store.settings(), checkpoint, checked)
     report.update(
         render_reused=reusable,
         source_sha256=source_digest,
